@@ -1,11 +1,12 @@
 import os
-from datetime import datetime
-import random as rn
 import argparse
 import platform
-import sqlite3
-import tqdm
 from typing import List
+from datetime import datetime
+from dateutil import parser as date_parser
+
+from database import ChromeHistoryDatabase
+from themed_spoofer import ThemedSpoofer
 
 
 def fetch_titles_from_search():
@@ -24,44 +25,20 @@ def get_default_history_path() -> str:
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(prog='Chrome History Spoofer', description='Inserts website visits into Chrome')
-    parser.add_argument('path', nargs='?', default=None)
+    parser.add_argument('-p', '--path', default=None, help="Path to Chrome's sqlite database, ")
+    parser.add_argument('-d', '--start-date', default=datetime.now(), help="How far back in time to start the spoof, "
+                                                                           "formatted as a date and time.")
+    parser.add_argument('-a', '--avg-daily-visits', default=12, help="About how many websites are visited each day")
+    parser.add_argument('-s', '--sessions', default=2, help="How many internet 'sessions' per day")
+    parser.add_argument('-t', '--theme', default=None, help="If you want to select a theme: (Sports, News, Grandma)")
     args = parser.parse_args()
 
     dbpath = args.path if args.path else get_default_history_path()
 
     if not os.path.exists(dbpath):
-        raise LookupError(f"Unale to find chrome database automatically... try using >>>spoof.py <path>")
+        raise LookupError(f"Unable to find chrome database automatically... try: spoof.py -p <path>")
 
-    con = sqlite3.connect(dbpath)
-    cur = con.cursor()
+    history_db = ChromeHistoryDatabase(path=dbpath)
 
-    then = datetime(1601, 1, 1)
-    today = datetime.now()
-    epoc = int((today - then).total_seconds() * 1000000)
-
-    query = f"""INSERT INTO urls (url, title, visit_count,  last_visit_time, hidden) VALUES('https://kitboga.com', 
-                                'kitboga', 1, {epoc}, 0) """
-
-    try:
-        cur.execute(query)
-        con.commit()
-    except sqlite3.OperationalError:
-        raise PermissionError('Chrome should not be running...')
-
-    lid = cur.lastrowid
-    dur = rn.randint(999, 999999)
-    query2 = f"""INSERT INTO visits (url, visit_time, visit_duration, from_visit, transition, segment_id) VALUES 
-                                    ({lid}, {epoc}, {dur}, 0, 805306376, 0) """
-    try:
-        cur.execute(query2)
-        con.commit()
-    except sqlite3.OperationalError as err:
-        print(err)
-    except Exception as err:
-        print(err)
-    cur.close()
-
-    if cur.lastrowid:
-        print('record inserted!')
-
-    con.close()
+    spoofer = ThemedSpoofer(history_db, time_travel_to=date_parser.parse(args.start_time), theme=args.theme)
+    spoofer.generate_history(args.avg_daily_visits, args.sessions)

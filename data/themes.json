@@ -13,22 +13,22 @@
       {
         "url": "https://www.food.com/recipe/all/popular?ref=nav",
         "selector": "[data-url]",
-        "data": "attributes"
+        "attr": "data-url"
       },
       {
         "url": "https://www.allrecipes.com/recipes/",
         "selector": "a.mntl-document-card",
-        "data": "href"
+        "attr": "href"
       },
       {
         "url": "https://apple.com/",
         "selector": "#ac-globalnav li a",
-        "data": "href"
+        "attr": "href"
       },
       {
         "url": "https://www.ted.com/talks",
         "selector": "#browse-results a.ga-link",
-        "data": "href"
+        "attr": "href"
       }
     ],
     "sessions": [

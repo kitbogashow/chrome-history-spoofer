@@ -1,6 +1,7 @@
 import os
 import argparse
 import platform
+import logging
 from typing import List
 from datetime import datetime
 from dateutil import parser as date_parser
@@ -8,10 +9,8 @@ from dateutil import parser as date_parser
 from database import ChromeHistoryDatabase
 from themed_spoofer import ThemedSpoofer
 
-
-def fetch_titles_from_search():
-    pass
-
+_logger = logging.getLogger(__name__)
+logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)  # todo: colored logging output
 
 def get_default_history_path() -> str:
     if platform.system() == "Darwin":  # osx/mac
@@ -26,8 +25,8 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(prog='Chrome History Spoofer', description='Inserts website visits into Chrome')
     parser.add_argument('-p', '--path', default=None, help="Path to Chrome's sqlite database, ")
-    parser.add_argument('-d', '--start-date', default=datetime.now(), help="How far back in time to start the spoof, "
-                                                                           "formatted as a date and time.")
+    parser.add_argument('-d', '--start-date', default=str(datetime.now()), help="How far back in time to start the "
+                                                                                "spoof, formatted as a date and time.")
     parser.add_argument('-a', '--avg-daily-visits', default=12, help="About how many websites are visited each day")
     parser.add_argument('-s', '--sessions', default=2, help="How many internet 'sessions' per day")
     parser.add_argument('-t', '--theme', default=None, help="If you want to select a theme: (Sports, News, Grandma)")
@@ -40,5 +39,7 @@ if __name__ == '__main__':
 
     history_db = ChromeHistoryDatabase(path=dbpath)
 
-    spoofer = ThemedSpoofer(history_db, time_travel_to=date_parser.parse(args.start_time), theme=args.theme)
+    # todo: consider checking if chrome is running? because otherwise it will throw errors after trying to add values
+
+    spoofer = ThemedSpoofer(history_db, time_travel_to=date_parser.parse(args.start_date), theme=args.theme)
     spoofer.generate_history(args.avg_daily_visits, args.sessions)

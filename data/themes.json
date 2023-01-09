@@ -11,11 +11,6 @@
     ],
     "click_random_links": [
       {
-        "url": "https://www.food.com/recipe/all/popular?ref=nav",
-        "selector": "[data-url]",
-        "attr": "data-url"
-      },
-      {
         "url": "https://www.allrecipes.com/recipes/",
         "selector": "a.mntl-document-card",
         "attr": "href"

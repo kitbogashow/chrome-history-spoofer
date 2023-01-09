@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import random as rn
 import sqlite3
 import validators
@@ -19,12 +19,12 @@ class ChromeHistoryDatabase:
         self,
         url: str,
         title: str,
-        date: datetime = datetime.now(),
+        date: timedelta = datetime.now(),
         duration: int = rn.randint(10, 3600),
     ):
 
-        if url.strip() or not validators.url(url):
-            raise ValueError("Invalid URL!")
+        if not validators.url(url):
+            raise ValueError(f"{url} is not a valid url >> {validators.url(url)}")
 
         cur = self.con.cursor()
         epoc = _date_to_chrome_epoc(date)

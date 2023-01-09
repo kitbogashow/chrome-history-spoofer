@@ -4,8 +4,9 @@ import json
 import requests
 from urllib.parse import urlparse
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 from bs4 import BeautifulSoup as Soup
+from tqdm import tqdm
 
 from database import ChromeHistoryDatabase
 
@@ -24,7 +25,7 @@ class Theme:
         """return a single website from the config"""
         return random.choice(self.config['single_visit'])
 
-    def get_simulation_urls(self, with_soup: bool = False, maximum: int = 6) -> List[str]:
+    def get_simulation_urls(self, with_soup: bool = False, maximum: int = 6) -> List[List[Optional[str]]]:
         if not with_soup:
             return random.choice(self.config['sessions'])
         else:  # actually visit the urls (ie: run a simulation)
@@ -34,12 +35,18 @@ class Theme:
             all_urls = page_html.select(simulation['selector'])
             random.shuffle(all_urls)
             urls = []
-            for i in range(min(len(all_urls), maximum)):
-                # title = page_html.find('title').string
+            for i in tqdm(range(min(len(all_urls), maximum))):
                 url = all_urls[i].attrs[simulation['attr']]
                 if urlparse(simulation['url']).hostname not in url:  # todo: needs one liner to impress people
                     url = urlparse(simulation['url']).hostname + url
-                urls.append(url)
+
+                try:
+                    title = Soup(requests.get(url).content, 'html.parser').find('title').string
+                except AttributeError:
+                    _logger.debug(f"Problem getting page title for {url}")
+                    title = urlparse(simulation['url']).hostname  # a fallback
+
+                urls.append([url, title])
 
             return urls
 
@@ -52,6 +59,8 @@ class ThemedSpoofer:
 
     def generate_history(self, avg_daily_visits: int, daily_sessions: int):
         # todo: do some math to figure out how often websites should be visited to make it seem semi real
-        w = self.theme.get_simulation_urls(with_soup=True, maximum=18)
-        _logger.debug(f"Inserting random websites:{w}")
-        # self.database.insert_web_visit()
+        web_visits = self.theme.get_simulation_urls(with_soup=True, maximum=18)
+        for visit in web_visits:
+            print(f"{visit[1]} >> {visit[0]}")
+
+

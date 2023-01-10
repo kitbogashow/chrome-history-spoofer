@@ -2,6 +2,9 @@ from datetime import datetime, timedelta
 import random as rn
 import sqlite3
 import validators
+import logging
+
+_logger = logging.getLogger(__name__)
 
 
 def _date_to_chrome_epoc(date):
@@ -19,7 +22,7 @@ class ChromeHistoryDatabase:
         self,
         url: str,
         title: str,
-        date: timedelta = datetime.now(),
+        date: datetime = datetime.now(),
         duration: int = rn.randint(10, 3600),
     ):
 
@@ -30,15 +33,12 @@ class ChromeHistoryDatabase:
         epoc = _date_to_chrome_epoc(date)
 
         try:
-            cur.execute(
-                f"""INSERT INTO urls (url, title, visit_count,  last_visit_time, hidden) \
-                VALUES({url}, {title}, 1, {epoc}, 0) """)
+            cur.execute(f"INSERT INTO urls (url, title, visit_count, last_visit_time, hidden) VALUES (?, ?, ?, ?, ?)", (url, title, 1, epoc, 0))
             self.con.commit()
-            cur.execute(
-                f"""INSERT INTO visits (url, visit_time, visit_duration, from_visit, transition, \
-                segment_id) VALUES ({cur.lastrowid}, {epoc}, {duration}, 0, 805306376, 0) """)
+            cur.execute(f"INSERT INTO visits (url, visit_time, visit_duration, from_visit, transition, \
+                        segment_id) VALUES (?, ?, ?, ?, ?, ?)", (cur.lastrowid, epoc, duration, 0, 805306376, 0))
             self.con.commit()
-        except sqlite3.OperationalError:
-            raise PermissionError("Chrome should not be running...")
+        except sqlite3.OperationalError as e:
+            _logger.error(e)
 
         cur.close()

@@ -2,9 +2,9 @@ import random
 import logging
 import json
 import time
-import datetime
 import math
 from urllib.parse import urlparse
+from datetime import datetime, timedelta
 from typing import List, Optional
 from bs4 import BeautifulSoup as Soup
 from requests_cache import CachedSession
@@ -30,7 +30,8 @@ class Theme:
         return random.choice(self.config['single_visit'])
 
     def get_simulation_urls(self, throttle: float = 0.01,
-                            with_soup: bool = False, maximum: int = 6) -> List[List[Optional[str]]]:
+                            with_soup: bool = False, maximum: int = 6,
+                            tqdm_desc: str = "") -> List[List[Optional[str]]]:
         if not with_soup:
             return random.choice(self.config['sessions'])
         else:  # actually visit the urls (ie: run a simulation)
@@ -43,7 +44,7 @@ class Theme:
 
             random.shuffle(all_urls)
             urls = []
-            for i in tqdm(range(min(len(all_urls), maximum))):
+            for i in tqdm(range(min(len(all_urls), maximum)), desc=tqdm_desc + "Requests"):
                 url = all_urls[i].attrs[simulation['attr']]
                 if urlparse(simulation['url']).hostname not in url:  # todo: needs one liner to impress people
                     url = urlparse(simulation['url']).scheme + "://" + urlparse(simulation['url']).hostname + url
@@ -77,13 +78,15 @@ class ThemedSpoofer:
         pass
 
     def generate_history(self, throttle_time: float):
-        for days_ago in range(self.days_to_time_travel):
+        _logger.info(f"Adding history for the last {self.days_to_time_travel} days...")
+        for day in range(self.days_to_time_travel):
             for session in range(self.daily_sessions):
                 # todo: spice this up a bit, and build out other functions / randomness
                 # todo: include the random range threshold in calculation
-                visits = math.floor(self.daily_visits / self.daily_sessions)
-                web_visits = self.theme.get_simulation_urls(with_soup=True, maximum=visits, throttle=throttle_time)
-                for visit in web_visits:
-                    d = datetime.timedelta(days=days_ago)  # todo: this needs to be a date ?
-                    #self.database.insert_web_visit(visit[0], visit[1], date=d)
-                    print(visit[0])
+                visits = math.floor(min(self.daily_visits + random.randrange(-self.avg_range, self.avg_range),
+                                        self.daily_sessions) / self.daily_sessions)
+                web_visits = self.theme.get_simulation_urls(with_soup=True, maximum=visits, throttle=throttle_time,
+                                                            tqdm_desc=f"Day {day+1} Session {session+1}")
+                for i, visit in enumerate(web_visits):
+                    d = datetime.now() - timedelta(days=day, hours=session*3, minutes=i*2)
+                    self.database.insert_web_visit(visit[0], visit[1], date=d)

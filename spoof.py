@@ -26,7 +26,7 @@ if __name__ == '__main__':
     parser.add_argument('-p', '--path', default=None, help="Path to Chrome's sqlite database, ")
     parser.add_argument('-d', '--days-ago', default=2,
                         help="How far back in time to start the spoof, x number of days ago...")
-    parser.add_argument('-a', '--avg-daily-visits', default=12, help="About how many websites are visited each day")
+    parser.add_argument('-a', '--avg-daily-visits', default=15, help="About how many websites are visited each day")
     parser.add_argument('--avg-threshold', default=4, help="Plus or minus average daily visits range")
     parser.add_argument('-s', '--sessions', default=2, help="How many internet 'sessions' per day")
     parser.add_argument('-t', '--theme', default="default", help="If you want to select a theme: (Boomer, Sports)")
